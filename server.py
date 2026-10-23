@@ -47,16 +47,20 @@ def make_handler(engine: BotEngine) -> type[BaseHTTPRequestHandler]:
 
 
 def serve(engine: BotEngine, host: str, port: int) -> None:
-    server = ThreadingHTTPServer((host, port), make_handler(engine))
-    server.daemon_threads = True
-    logging.info(
-        "Health server listening on %s:%s; TradingView webhooks are disabled.",
-        host,
-        port,
-    )
     try:
+        server = ThreadingHTTPServer((host, port), make_handler(engine))
+        server.daemon_threads = True
+        logging.info(
+            "Health server listening on %s:%s; TradingView webhooks are disabled.",
+            host,
+            port,
+        )
         server.serve_forever()
-    except KeyboardInterrupt:
-        logging.info("Paper bot stopped.")
-    finally:
-        server.server_close()
+    except Exception as e:
+        logging.warning("Could not start status server (%s). Continuing without status server...", e)
+        try:
+            import time
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            logging.info("Paper bot stopped.")
